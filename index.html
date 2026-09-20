@@ -272,7 +272,8 @@
             border-radius: 1rem 1rem 0 0;
             overflow-y: auto !important;
             overflow-x: hidden !important;
-            padding: 1.5rem 1rem 2rem;
+            padding: 90px 1rem 2rem 1rem !important;
+            margin-top: 0 !important;
         }
 
         .modal-header {
@@ -282,10 +283,14 @@
             padding: 1rem;
             border-bottom: 1px solid var(--border);
             background-color: var(--surface);
-            position: sticky;
-            top: 0;
+            position: fixed !important;
+            bottom: auto !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
             z-index: 1001 !important;
-            margin: -1.5rem -1rem 1.5rem -1rem;
+            width: 100% !important;
+            max-width: 100% !important;
         }
 
         .modal-title {
@@ -519,17 +524,17 @@
 
     <!-- Modal -->
     <div class="modal" id="formModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="formTitle">新增需求單</h2>
-                <div class="modal-header-actions">
-                    <button type="button" class="btn btn-secondary btn-small" id="cancelBtn" style="display:none;">取消</button>
-                    <button type="button" class="btn btn-danger btn-small" id="deleteBtn" style="display:none;">刪除</button>
-                    <button type="submit" class="btn btn-primary btn-small" id="submitBtn">保存</button>
-                    <button class="modal-close" id="closeBtn">✕</button>
-                </div>
+        <div class="modal-header">
+            <h2 class="modal-title" id="formTitle">新增需求單</h2>
+            <div class="modal-header-actions">
+                <button type="button" class="btn btn-secondary btn-small" id="cancelBtn" style="display:none;">取消</button>
+                <button type="button" class="btn btn-danger btn-small" id="deleteBtn" style="display:none;">刪除</button>
+                <button type="submit" class="btn btn-primary btn-small" id="submitBtn">保存</button>
+                <button class="modal-close" id="closeBtn">✕</button>
             </div>
+        </div>
 
+        <div class="modal-content">
             <form id="itemForm">
                 <!-- 基本資訊 -->
                 <div class="form-section">
