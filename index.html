@@ -962,6 +962,12 @@
             return '';
         }
 
+        // Helper: Format number as rounded integer with locale string
+        function formatNumber(value) {
+            if (!value) return '0';
+            return Math.round(parseFloat(value)).toLocaleString();
+        }
+
         // Initialize
         async function init() {
             await fetchFieldOptions();
@@ -1155,9 +1161,17 @@
         }
 
         // Fetch items from Notion
-        async function fetchItems() {
+        async function fetchItems(skipCache = false) {
             try {
-                const response = await fetch(`${API_BASE}?action=query&databaseId=${NOTION_DB_ID}`);
+                const cacheParam = skipCache ? `&_t=${Date.now()}` : '';
+                const response = await fetch(`${API_BASE}?action=query&databaseId=${NOTION_DB_ID}${cacheParam}`, {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
                 const data = await response.json();
 
                 items = data.results || [];
@@ -1312,11 +1326,11 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">數量</span>
-                                    <span class="info-value">${quantity} 件</span>
+                                    <span class="info-value">${formatNumber(quantity)} 件</span>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">台幣總價</span>
-                                    <span class="info-value">$${twdTotal ? parseFloat(twdTotal).toLocaleString() : '0'}</span>
+                                    <span class="info-value">$${formatNumber(twdTotal)}</span>
                                 </div>
                             </div>
                             <div class="badges">
@@ -1504,7 +1518,7 @@
                 }
 
                 closeModal();
-                await fetchItems();
+                await fetchItems(true);
             } catch (error) {
                 console.error('Save error:', error);
                 alert('保存失敗，請重試');
@@ -1523,7 +1537,7 @@
                 if (!response.ok) throw new Error('Failed to delete');
 
                 closeModal();
-                await fetchItems();
+                await fetchItems(true);
             } catch (error) {
                 console.error('Delete error:', error);
                 alert('刪除失敗，請重試');
@@ -1542,7 +1556,7 @@
         refreshBtn.addEventListener('click', async () => {
             refreshBtn.style.opacity = '0.5';
             refreshBtn.style.pointerEvents = 'none';
-            await fetchItems();
+            await fetchItems(true);
             refreshBtn.style.opacity = '1';
             refreshBtn.style.pointerEvents = 'auto';
         });
