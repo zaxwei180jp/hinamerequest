@@ -759,6 +759,25 @@
             itemForm.reset();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('purchaseDate').value = today;
+
+            // Auto-generate next request number
+            if (items.length > 0) {
+                const allNumbers = items
+                    .map(item => {
+                        const title = getPropertyValue(item.properties[FIELDS.title]);
+                        const match = title.match(/(\D+)(\d+)$/);
+                        return match ? { prefix: match[1], num: parseInt(match[2]) } : null;
+                    })
+                    .filter(x => x);
+
+                if (allNumbers.length > 0) {
+                    // 取得最後一筆的前綴和數字
+                    const lastNumber = allNumbers.sort((a, b) => b.num - a.num)[0];
+                    const nextNum = String(lastNumber.num + 1).padStart(3, '0');
+                    document.getElementById('title').value = lastNumber.prefix + nextNum;
+                }
+            }
+
             formModal.classList.add('active');
         }
 
