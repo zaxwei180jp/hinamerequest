@@ -1,4 +1,13 @@
 export default async function handler(req, res) {
+  // 允許 CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const NOTION_TOKEN = process.env.NOTION_TOKEN;
 
   if (!NOTION_TOKEN) {
@@ -14,89 +23,60 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Get database schema
+    // 取得資料庫 schema
     if (action === 'getDatabase') {
       const response = await fetch(`${notionUrl}/databases/${databaseId}`, {
         method: 'GET',
         headers
       });
-
-      if (!response.ok) {
-        return res.status(response.status).json({ error: 'Failed to fetch database' });
-      }
-
-      return res.json(await response.json());
+      const data = await response.json();
+      return res.status(response.status).json(data);
     }
 
-    // Query database
+    // 查詢資料庫
     if (action === 'query') {
       const response = await fetch(`${notionUrl}/databases/${databaseId}/query`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          sorts: [
-            {
-              property: 'title',
-              direction: 'descending'
-            }
-          ]
+          sorts: [{ property: 'title', direction: 'descending' }]
         })
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        return res.status(response.status).json({ error });
-      }
-
-      return res.json(await response.json());
+      const data = await response.json();
+      return res.status(response.status).json(data);
     }
 
-    // Update page
-    if (action === 'update') {
+    // 更新頁面
+    if (action === 'update' && pageId) {
       const response = await fetch(`${notionUrl}/pages/${pageId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify(req.body)
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        return res.status(response.status).json({ error });
-      }
-
-      return res.json(await response.json());
+      const data = await response.json();
+      return res.status(response.status).json(data);
     }
 
-    // Delete page (archive)
-    if (action === 'delete') {
+    // 刪除頁面 (歸檔)
+    if (action === 'delete' && pageId) {
       const response = await fetch(`${notionUrl}/pages/${pageId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ archived: true })
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        return res.status(response.status).json({ error });
-      }
-
-      return res.json(await response.json());
+      const data = await response.json();
+      return res.status(response.status).json(data);
     }
 
-    // Create page
+    // 建立頁面
     if (req.method === 'POST') {
       const response = await fetch(`${notionUrl}/pages`, {
         method: 'POST',
         headers,
         body: JSON.stringify(req.body)
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        return res.status(response.status).json({ error });
-      }
-
-      return res.json(await response.json());
+      const data = await response.json();
+      return res.status(response.status).json(data);
     }
 
     return res.status(400).json({ error: 'Invalid action' });
