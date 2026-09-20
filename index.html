@@ -151,8 +151,8 @@
         }
 
         .card-image {
-            width: 80px;
-            height: 80px;
+            width: 120px;
+            height: 120px;
             border-radius: 0.5rem;
             object-fit: cover;
             background-color: var(--border);
@@ -160,8 +160,8 @@
         }
 
         .card-image-placeholder {
-            width: 80px;
-            height: 80px;
+            width: 120px;
+            height: 120px;
             border-radius: 0.5rem;
             background-color: var(--border);
             flex-shrink: 0;
@@ -180,11 +180,18 @@
             font-size: 1.1rem;
         }
 
+        .card-subtitle-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.25rem;
+        }
+
         .card-subtitle {
             color: var(--text-light);
             font-size: 1rem;
             font-weight: 500;
-            margin-bottom: 0.25rem;
         }
 
         .card-category {
@@ -1278,7 +1285,7 @@
                 const category = getPropertyValue(props[FIELDS.category]);
                 const productName = getPropertyValue(props[FIELDS.productName]);
                 const quantity = getPropertyValue(props[FIELDS.quantity]);
-                const twdPrice = getPropertyValue(props[FIELDS.twdPrice]);
+                const twdTotal = getPropertyValue(props[FIELDS.twdTotal]);
                 const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
                 const payStatus = getPropertyValue(props[FIELDS.payStatus]);
                 const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
@@ -1292,8 +1299,10 @@
                             <div class="card-header">
                                 <div>
                                     <div class="card-title">${title}</div>
-                                    <div class="card-subtitle">${customer}</div>
-                                    ${category ? `<div class="card-category">📦 ${category}</div>` : ''}
+                                    <div class="card-subtitle-row">
+                                        <span class="card-subtitle">${customer}</span>
+                                        ${category ? `<span class="card-category">📦 ${category}</span>` : ''}
+                                    </div>
                                 </div>
                             </div>
                             <div class="card-info">
@@ -1306,8 +1315,8 @@
                                     <span class="info-value">${quantity} 件</span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="info-label">台幣報價</span>
-                                    <span class="info-value">$${twdPrice ? parseFloat(twdPrice).toLocaleString() : '0'}</span>
+                                    <span class="info-label">台幣總價</span>
+                                    <span class="info-value">$${twdTotal ? parseFloat(twdTotal).toLocaleString() : '0'}</span>
                                 </div>
                             </div>
                             <div class="badges">
