@@ -137,11 +137,34 @@
             padding: 1rem;
             cursor: pointer;
             transition: all 0.2s;
+            display: flex;
+            gap: 1rem;
         }
 
         .card:active {
             background-color: var(--border);
             transform: scale(0.98);
+        }
+
+        .card-content {
+            flex: 1;
+        }
+
+        .card-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 0.5rem;
+            object-fit: cover;
+            background-color: var(--border);
+            flex-shrink: 0;
+        }
+
+        .card-image-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 0.5rem;
+            background-color: var(--border);
+            flex-shrink: 0;
         }
 
         .card-header {
@@ -159,7 +182,15 @@
 
         .card-subtitle {
             color: var(--text-light);
-            font-size: 0.875rem;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-category {
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 500;
         }
 
         .card-info {
@@ -185,6 +216,47 @@
 
         .info-value {
             font-weight: 500;
+        }
+
+        /* Input with clear button */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-wrapper input {
+            padding-right: 2.5rem;
+            width: 100%;
+            flex: 1;
+        }
+
+        .clear-btn {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: auto;
+            min-height: auto;
+        }
+
+        .input-wrapper input:not(:placeholder-shown) ~ .clear-btn {
+            opacity: 1;
+        }
+
+        .clear-btn:active {
+            color: var(--text);
         }
 
         .badges {
@@ -416,6 +488,10 @@
             min-height: 44px;
         }
 
+        .input-wrapper input {
+            min-height: 44px;
+        }
+
         input:focus,
         select:focus,
         textarea:focus {
@@ -634,6 +710,7 @@
     <header>
         <div class="header-content">
             <h1>需求單</h1>
+            <button class="btn btn-secondary" id="refreshBtn" title="重新整理">🔄</button>
             <button class="btn btn-primary" id="newBtn">新增</button>
         </div>
     </header>
@@ -643,7 +720,10 @@
         <!-- Filter Section -->
         <div class="filter-section">
             <div class="filter-group">
-                <input type="text" id="filterCustomer" placeholder="篩選客戶名稱" class="filter-input">
+                <div class="input-wrapper">
+                    <input type="text" id="filterCustomer" placeholder="篩選客戶名稱" class="filter-input">
+                    <button type="button" class="clear-btn" onclick="clearFilterCustomer()">✕</button>
+                </div>
             </div>
             <div class="filter-group">
                 <label>購買狀態</label>
@@ -693,7 +773,10 @@
 
                     <div class="form-group">
                         <label>客戶</label>
-                        <input type="text" id="customer" placeholder="客戶名稱" required>
+                        <div class="input-wrapper">
+                            <input type="text" id="customer" placeholder="客戶名稱" required>
+                            <button type="button" class="clear-btn" onclick="clearCustomer()">✕</button>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -706,7 +789,10 @@
 
                         <div class="form-group">
                             <label>商品名稱</label>
-                            <input type="text" id="productName" placeholder="商品名稱" required>
+                            <div class="input-wrapper">
+                                <input type="text" id="productName" placeholder="商品名稱" required>
+                                <button type="button" class="clear-btn" onclick="clearProductName()">✕</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -841,6 +927,7 @@
         const formModal = document.getElementById('formModal');
         const itemForm = document.getElementById('itemForm');
         const newBtn = document.getElementById('newBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
         const closeBtn = document.getElementById('closeBtn');
         const cancelBtn = document.getElementById('cancelBtn');
         const deleteBtn = document.getElementById('deleteBtn');
@@ -1135,6 +1222,21 @@
             renderImagePreview();
         }
 
+        // Clear input fields
+        function clearFilterCustomer() {
+            filterCustomerInput.value = '';
+            filters.customer = '';
+            renderList();
+        }
+
+        function clearCustomer() {
+            document.getElementById('customer').value = '';
+        }
+
+        function clearProductName() {
+            document.getElementById('productName').value = '';
+        }
+
         // Render list
         function renderList() {
             // Filter items
@@ -1180,34 +1282,41 @@
                 const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
                 const payStatus = getPropertyValue(props[FIELDS.payStatus]);
                 const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
+                const productImagesValue = getPropertyValue(props[FIELDS.productImages]);
+                const images = productImagesValue ? JSON.parse(productImagesValue) : [];
+                const firstImage = images.length > 0 ? images[0] : null;
 
                 return `
                     <div class="card" onclick="editItem('${item.id}')">
-                        <div class="card-header">
-                            <div>
-                                <div class="card-title">${title}</div>
-                                <div class="card-subtitle">${customer}${category ? ' · ' + category : ''}</div>
+                        <div class="card-content">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">${title}</div>
+                                    <div class="card-subtitle">${customer}</div>
+                                    ${category ? `<div class="card-category">📦 ${category}</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="card-info">
+                                <div class="info-item">
+                                    <span class="info-label">商品</span>
+                                    <span class="info-value">${productName}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">數量</span>
+                                    <span class="info-value">${quantity} 件</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">台幣報價</span>
+                                    <span class="info-value">$${twdPrice ? parseFloat(twdPrice).toLocaleString() : '0'}</span>
+                                </div>
+                            </div>
+                            <div class="badges">
+                                ${buyStatus ? `<span class="badge badge-status badge-status-${buyStatus}">${buyStatus}</span>` : ''}
+                                ${payStatus ? `<span class="badge badge-status badge-status-${payStatus}">${payStatus}</span>` : ''}
+                                ${shipStatus ? `<span class="badge badge-status badge-status-${shipStatus}">${shipStatus}</span>` : ''}
                             </div>
                         </div>
-                        <div class="card-info">
-                            <div class="info-item">
-                                <span class="info-label">商品</span>
-                                <span class="info-value">${productName}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">數量</span>
-                                <span class="info-value">${quantity} 件</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">台幣報價</span>
-                                <span class="info-value">$${twdPrice ? parseFloat(twdPrice).toLocaleString() : '0'}</span>
-                            </div>
-                        </div>
-                        <div class="badges">
-                            ${buyStatus ? `<span class="badge badge-status badge-status-${buyStatus}">${buyStatus}</span>` : ''}
-                            ${payStatus ? `<span class="badge badge-status badge-status-${payStatus}">${payStatus}</span>` : ''}
-                            ${shipStatus ? `<span class="badge badge-status badge-status-${shipStatus}">${shipStatus}</span>` : ''}
-                        </div>
+                        ${firstImage ? `<img src="${firstImage}" alt="Product" class="card-image">` : '<div class="card-image-placeholder"></div>'}
                     </div>
                 `;
             }).join('') + '</div>';
@@ -1421,6 +1530,13 @@
 
         // Event listeners
         newBtn.addEventListener('click', newItem);
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.style.opacity = '0.5';
+            refreshBtn.style.pointerEvents = 'none';
+            await fetchItems();
+            refreshBtn.style.opacity = '1';
+            refreshBtn.style.pointerEvents = 'auto';
+        });
         closeBtn.addEventListener('click', closeModal);
         cancelBtn.addEventListener('click', closeModal);
         deleteBtn.addEventListener('click', handleDelete);
