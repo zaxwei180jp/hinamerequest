@@ -193,6 +193,77 @@
             gap: 0.5rem;
         }
 
+        /* Filter Section */
+        .filter-section {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            gap: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--text);
+            background-color: var(--surface);
+            min-height: 44px;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(212, 165, 165, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background-color: var(--surface);
+            color: var(--text);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 36px;
+            white-space: nowrap;
+        }
+
+        .filter-btn:active {
+            background-color: var(--border);
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
         .badge {
             display: inline-block;
             padding: 0.375rem 0.75rem;
@@ -419,6 +490,61 @@
             font-weight: 600;
         }
 
+        /* Image upload */
+        .image-upload-section {
+            border: 1px dashed var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .image-item {
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background-color: var(--border);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-remove {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .image-placeholder {
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
         /* Buttons */
         .modal-actions {
             display: flex;
@@ -514,6 +640,26 @@
 
     <!-- Main Container -->
     <div class="container">
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <input type="text" id="filterCustomer" placeholder="篩選客戶名稱" class="filter-input">
+            </div>
+            <div class="filter-group">
+                <label>購買狀態</label>
+                <div id="filterBuyStatus" class="filter-buttons"></div>
+            </div>
+            <div class="filter-group">
+                <label>付款狀態</label>
+                <div id="filterPayStatus" class="filter-buttons"></div>
+            </div>
+            <div class="filter-group">
+                <label>發貨狀態</label>
+                <div id="filterShipStatus" class="filter-buttons"></div>
+            </div>
+            <button id="clearFilters" class="btn btn-secondary btn-small">清除篩選</button>
+        </div>
+
         <div id="listView">
             <div class="loading">
                 <div class="spinner"></div>
@@ -563,6 +709,17 @@
                             <input type="text" id="productName" placeholder="商品名稱" required>
                         </div>
                     </div>
+                </div>
+
+                <!-- 圖片上傳 -->
+                <div class="form-section">
+                    <div class="section-title">商品圖片</div>
+                    <div class="image-upload-section">
+                        <button type="button" class="btn btn-secondary btn-small" id="uploadBtn">上傳圖片</button>
+                        <input type="file" class="upload-input" id="fileInput" accept="image/*" multiple>
+                        <div class="image-preview" id="imagePreview"></div>
+                    </div>
+                    <input type="hidden" id="productImages">
                 </div>
 
                 <!-- 數量與價格 -->
@@ -636,6 +793,8 @@
         // Configuration
         const NOTION_DB_ID = '3e1c662d5fc480f680b0ef4c0b936e25';
         const API_BASE = '/api/notion';
+        const CLOUDINARY_CLOUD_NAME = 'doue38blc';
+        const CLOUDINARY_API_KEY = '487785152371311';
 
         // Field mapping - 繁體中文欄位名稱
         const FIELDS = {
@@ -643,6 +802,7 @@
             customer: '客戶',
             category: '類別',
             productName: '商品名稱',
+            productImages: '商品圖片',
             quantity: '數量',
             jpyCost: '日幣成本單價',
             jpyPrice: '日幣報價單價',
@@ -666,6 +826,15 @@
             payStatuses: [],
             shipStatuses: []
         };
+        let uploadedImages = [];
+
+        // Filter State
+        let filters = {
+            customer: '',
+            buyStatus: [],
+            payStatus: [],
+            shipStatus: []
+        };
 
         // DOM Elements
         const listView = document.getElementById('listView');
@@ -677,6 +846,14 @@
         const deleteBtn = document.getElementById('deleteBtn');
         const submitBtn = document.getElementById('submitBtn');
         const formTitle = document.getElementById('formTitle');
+        const filterCustomerInput = document.getElementById('filterCustomer');
+        const filterBuyStatusGroup = document.getElementById('filterBuyStatus');
+        const filterPayStatusGroup = document.getElementById('filterPayStatus');
+        const filterShipStatusGroup = document.getElementById('filterShipStatus');
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
 
         // Helper: Get value from Notion property
         function getPropertyValue(prop) {
@@ -722,6 +899,7 @@
 
                     populateSelects();
                     populateStatusButtons();
+                    populateFilterButtons();
                 }
             } catch (error) {
                 console.error('Failed to fetch field options:', error);
@@ -809,6 +987,79 @@
             return activeBtn?.textContent || '';
         }
 
+        // Populate filter buttons
+        function populateFilterButtons() {
+            filterBuyStatusGroup.innerHTML = '';
+            filterPayStatusGroup.innerHTML = '';
+            filterShipStatusGroup.innerHTML = '';
+
+            // Buy status filter buttons
+            fieldOptions.buyStatuses.forEach(status => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'filter-btn';
+                btn.textContent = status;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleFilterStatus('buyStatus', status);
+                });
+                filterBuyStatusGroup.appendChild(btn);
+            });
+
+            // Pay status filter buttons
+            fieldOptions.payStatuses.forEach(status => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'filter-btn';
+                btn.textContent = status;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleFilterStatus('payStatus', status);
+                });
+                filterPayStatusGroup.appendChild(btn);
+            });
+
+            // Ship status filter buttons
+            fieldOptions.shipStatuses.forEach(status => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'filter-btn';
+                btn.textContent = status;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleFilterStatus('shipStatus', status);
+                });
+                filterShipStatusGroup.appendChild(btn);
+            });
+        }
+
+        // Toggle filter status
+        function toggleFilterStatus(statusType, status) {
+            if (filters[statusType].includes(status)) {
+                filters[statusType] = filters[statusType].filter(s => s !== status);
+            } else {
+                filters[statusType].push(status);
+            }
+            updateFilterButtons();
+            renderList();
+        }
+
+        // Update filter button UI
+        function updateFilterButtons() {
+            ['buyStatus', 'payStatus', 'shipStatus'].forEach(statusType => {
+                const group = statusType === 'buyStatus' ? filterBuyStatusGroup :
+                             statusType === 'payStatus' ? filterPayStatusGroup :
+                             filterShipStatusGroup;
+                group.querySelectorAll('.filter-btn').forEach(btn => {
+                    if (filters[statusType].includes(btn.textContent)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            });
+        }
+
         // Fetch items from Notion
         async function fetchItems() {
             try {
@@ -823,14 +1074,102 @@
             }
         }
 
+        // Cloudinary upload
+        uploadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                if (uploadedImages.length >= 2) {
+                    alert('最多只能上傳 2 張圖片');
+                    break;
+                }
+                await uploadToCloudinary(file);
+            }
+            fileInput.value = '';
+        });
+
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'unsigned_upload');
+            formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
+
+            try {
+                const response = await fetch(
+                    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+                    { method: 'POST', body: formData }
+                );
+                const data = await response.json();
+                if (data.secure_url) {
+                    uploadedImages.push(data.secure_url);
+                    document.getElementById('productImages').value = JSON.stringify(uploadedImages);
+                    renderImagePreview();
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('上傳失敗');
+            }
+        }
+
+        function renderImagePreview() {
+            imagePreview.innerHTML = uploadedImages.map((url, idx) => `
+                <div class="image-item">
+                    <img src="${url}" alt="Product image ${idx + 1}">
+                    <button type="button" class="image-remove" onclick="removeImage(${idx})">✕</button>
+                </div>
+            `).join('');
+
+            // Add placeholder for empty slots (up to 2)
+            for (let i = uploadedImages.length; i < 2; i++) {
+                imagePreview.innerHTML += `<div class="image-item"><div class="image-placeholder">圖片 ${i + 1}</div></div>`;
+            }
+        }
+
+        function removeImage(idx) {
+            uploadedImages.splice(idx, 1);
+            document.getElementById('productImages').value = JSON.stringify(uploadedImages);
+            renderImagePreview();
+        }
+
         // Render list
         function renderList() {
-            if (items.length === 0) {
-                listView.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>沒有需求單</p></div>';
+            // Filter items
+            const filteredItems = items.filter(item => {
+                const props = item.properties || {};
+                const customer = getPropertyValue(props[FIELDS.customer]);
+                const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
+                const payStatus = getPropertyValue(props[FIELDS.payStatus]);
+                const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
+
+                // Customer name filter
+                if (filters.customer && !customer.toLowerCase().includes(filters.customer.toLowerCase())) {
+                    return false;
+                }
+
+                // Status filters
+                if (filters.buyStatus.length > 0 && !filters.buyStatus.includes(buyStatus)) {
+                    return false;
+                }
+                if (filters.payStatus.length > 0 && !filters.payStatus.includes(payStatus)) {
+                    return false;
+                }
+                if (filters.shipStatus.length > 0 && !filters.shipStatus.includes(shipStatus)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            if (filteredItems.length === 0) {
+                listView.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>沒有符合的需求單</p></div>';
                 return;
             }
 
-            listView.innerHTML = '<div class="list">' + items.map(item => {
+            listView.innerHTML = '<div class="list">' + filteredItems.map(item => {
                 const props = item.properties || {};
                 const title = getPropertyValue(props[FIELDS.title]);
                 const customer = getPropertyValue(props[FIELDS.customer]);
@@ -877,9 +1216,12 @@
         // Open form for new item
         function newItem() {
             currentItem = null;
+            uploadedImages = [];
             formTitle.textContent = '新增需求單';
             deleteBtn.style.display = 'none';
             itemForm.reset();
+            document.getElementById('productImages').value = '';
+            renderImagePreview();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('purchaseDate').value = today;
 
@@ -931,6 +1273,11 @@
             document.getElementById('weight').value = getPropertyValue(props[FIELDS.weight]);
             document.getElementById('purchaseDate').value = getPropertyValue(props[FIELDS.purchaseDate]);
 
+            // Restore images
+            const productImagesValue = getPropertyValue(props[FIELDS.productImages]);
+            uploadedImages = productImagesValue ? JSON.parse(productImagesValue) : [];
+            renderImagePreview();
+
             // Set status buttons
             const buyStatusValue = getPropertyValue(props[FIELDS.buyStatus]);
             const payStatusValue = getPropertyValue(props[FIELDS.payStatus]);
@@ -978,6 +1325,9 @@
                     },
                     [FIELDS.productName]: {
                         rich_text: [{ text: { content: document.getElementById('productName').value } }]
+                    },
+                    [FIELDS.productImages]: {
+                        rich_text: [{ text: { content: document.getElementById('productImages').value } }]
                     },
                     [FIELDS.quantity]: {
                         number: parseFloat(document.getElementById('quantity').value) || 0
@@ -1079,6 +1429,22 @@
             itemForm.dispatchEvent(new Event('submit'));
         });
         itemForm.addEventListener('submit', handleSubmit);
+
+        // Filter event listeners
+        filterCustomerInput.addEventListener('input', (e) => {
+            filters.customer = e.target.value;
+            renderList();
+        });
+
+        clearFiltersBtn.addEventListener('click', () => {
+            filters.customer = '';
+            filters.buyStatus = [];
+            filters.payStatus = [];
+            filters.shipStatus = [];
+            filterCustomerInput.value = '';
+            updateFilterButtons();
+            renderList();
+        });
 
         // Close modal on outside click
         formModal.addEventListener('click', (e) => {
