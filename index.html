@@ -572,7 +572,26 @@
         // Configuration
         const NOTION_DB_ID = '3e1c662d5fc480f680b0ef4c0b936e25';
         const API_BASE = '/api/notion';
-        const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+        // Field mapping - 繁體中文欄位名稱
+        const FIELDS = {
+            title: '需求單號',
+            customer: '客戶',
+            category: '類別',
+            productName: '商品名稱',
+            quantity: '數量',
+            jpyCost: '日幣成本單價',
+            jpyPrice: '日幣報價單價',
+            twdPrice: '台幣報價單價',
+            jpyTotal: '日幣報價總價',
+            twdTotal: '台幣總價',
+            twdProfit: '台幣利潤',
+            weight: '重量',
+            buyStatus: '購買狀態',
+            payStatus: '付款狀態',
+            shipStatus: '發貨狀態',
+            purchaseDate: '採買日期'
+        };
 
         // State
         let items = [];
@@ -594,6 +613,19 @@
         const deleteBtn = document.getElementById('deleteBtn');
         const formTitle = document.getElementById('formTitle');
 
+        // Helper: Get value from Notion property
+        function getPropertyValue(prop) {
+            if (!prop) return '';
+            if (prop.title) return prop.title.map(t => t.plain_text).join('');
+            if (prop.rich_text) return prop.rich_text.map(t => t.plain_text).join('');
+            if (prop.number !== undefined) return prop.number || '';
+            if (prop.select) return prop.select.name || '';
+            if (prop.status) return prop.status.name || '';
+            if (prop.date) return prop.date.start || '';
+            if (prop.formula && prop.formula.number !== undefined) return prop.formula.number || '';
+            return '';
+        }
+
         // Initialize
         async function init() {
             await fetchFieldOptions();
@@ -610,24 +642,23 @@
                     const props = data.properties;
 
                     // Extract select/status options
-                    if (props.category?.select?.options) {
-                        fieldOptions.categories = props.category.select.options.map(o => o.name);
+                    if (props[FIELDS.category]?.select?.options) {
+                        fieldOptions.categories = props[FIELDS.category].select.options.map(o => o.name);
                     }
-                    if (props['購買狀態']?.status?.options) {
-                        fieldOptions.buyStatuses = props['購買狀態'].status.options.map(o => o.name);
+                    if (props[FIELDS.buyStatus]?.status?.options) {
+                        fieldOptions.buyStatuses = props[FIELDS.buyStatus].status.options.map(o => o.name);
                     }
-                    if (props['付款狀態']?.status?.options) {
-                        fieldOptions.payStatuses = props['付款狀態'].status.options.map(o => o.name);
+                    if (props[FIELDS.payStatus]?.status?.options) {
+                        fieldOptions.payStatuses = props[FIELDS.payStatus].status.options.map(o => o.name);
                     }
-                    if (props['發貨狀態']?.status?.options) {
-                        fieldOptions.shipStatuses = props['發貨狀態'].status.options.map(o => o.name);
+                    if (props[FIELDS.shipStatus]?.status?.options) {
+                        fieldOptions.shipStatuses = props[FIELDS.shipStatus].status.options.map(o => o.name);
                     }
 
                     populateSelects();
                 }
             } catch (error) {
                 console.error('Failed to fetch field options:', error);
-                // Show error but allow manual entry
             }
         }
 
@@ -678,15 +709,15 @@
 
             listView.innerHTML = '<div class="list">' + items.map(item => {
                 const props = item.properties || {};
-                const title = props.title?.title?.[0]?.plain_text || 'N/A';
-                const customer = props.customer?.rich_text?.[0]?.plain_text || '';
-                const category = props.category?.select?.name || '';
-                const productName = props.productName?.rich_text?.[0]?.plain_text || '';
-                const quantity = props.quantity?.number || 0;
-                const twdPrice = props.twdPrice?.number || 0;
-                const buyStatus = props['購買狀態']?.status?.name || '';
-                const payStatus = props['付款狀態']?.status?.name || '';
-                const shipStatus = props['發貨狀態']?.status?.name || '';
+                const title = getPropertyValue(props[FIELDS.title]);
+                const customer = getPropertyValue(props[FIELDS.customer]);
+                const category = getPropertyValue(props[FIELDS.category]);
+                const productName = getPropertyValue(props[FIELDS.productName]);
+                const quantity = getPropertyValue(props[FIELDS.quantity]);
+                const twdPrice = getPropertyValue(props[FIELDS.twdPrice]);
+                const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
+                const payStatus = getPropertyValue(props[FIELDS.payStatus]);
+                const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
 
                 return `
                     <div class="card" onclick="editItem('${item.id}')">
@@ -707,7 +738,7 @@
                             </div>
                             <div class="info-item">
                                 <span class="info-label">台幣報價</span>
-                                <span class="info-value">$${twdPrice.toLocaleString()}</span>
+                                <span class="info-value">$${twdPrice ? parseFloat(twdPrice).toLocaleString() : '0'}</span>
                             </div>
                         </div>
                         <div class="badges">
@@ -742,19 +773,19 @@
             formTitle.textContent = '編輯需求單';
             deleteBtn.style.display = 'inline-flex';
 
-            document.getElementById('title').value = props.title?.title?.[0]?.plain_text || '';
-            document.getElementById('customer').value = props.customer?.rich_text?.[0]?.plain_text || '';
-            document.getElementById('category').value = props.category?.select?.name || '';
-            document.getElementById('productName').value = props.productName?.rich_text?.[0]?.plain_text || '';
-            document.getElementById('quantity').value = props.quantity?.number || '';
-            document.getElementById('jpyCost').value = props.jpyCost?.number || '';
-            document.getElementById('jpyPrice').value = props.jpyPrice?.number || '';
-            document.getElementById('twdPrice').value = props.twdPrice?.number || '';
-            document.getElementById('weight').value = props.weight?.number || '';
-            document.getElementById('buyStatus').value = props['購買狀態']?.status?.name || '';
-            document.getElementById('payStatus').value = props['付款狀態']?.status?.name || '';
-            document.getElementById('shipStatus').value = props['發貨狀態']?.status?.name || '';
-            document.getElementById('purchaseDate').value = props.purchaseDate?.date?.start || '';
+            document.getElementById('title').value = getPropertyValue(props[FIELDS.title]);
+            document.getElementById('customer').value = getPropertyValue(props[FIELDS.customer]);
+            document.getElementById('category').value = getPropertyValue(props[FIELDS.category]);
+            document.getElementById('productName').value = getPropertyValue(props[FIELDS.productName]);
+            document.getElementById('quantity').value = getPropertyValue(props[FIELDS.quantity]);
+            document.getElementById('jpyCost').value = getPropertyValue(props[FIELDS.jpyCost]);
+            document.getElementById('jpyPrice').value = getPropertyValue(props[FIELDS.jpyPrice]);
+            document.getElementById('twdPrice').value = getPropertyValue(props[FIELDS.twdPrice]);
+            document.getElementById('weight').value = getPropertyValue(props[FIELDS.weight]);
+            document.getElementById('buyStatus').value = getPropertyValue(props[FIELDS.buyStatus]);
+            document.getElementById('payStatus').value = getPropertyValue(props[FIELDS.payStatus]);
+            document.getElementById('shipStatus').value = getPropertyValue(props[FIELDS.shipStatus]);
+            document.getElementById('purchaseDate').value = getPropertyValue(props[FIELDS.purchaseDate]);
 
             formModal.classList.add('active');
         }
@@ -765,43 +796,43 @@
 
             const data = {
                 properties: {
-                    title: {
+                    [FIELDS.title]: {
                         title: [{ text: { content: document.getElementById('title').value } }]
                     },
-                    customer: {
+                    [FIELDS.customer]: {
                         rich_text: [{ text: { content: document.getElementById('customer').value } }]
                     },
-                    category: {
+                    [FIELDS.category]: {
                         select: { name: document.getElementById('category').value }
                     },
-                    productName: {
+                    [FIELDS.productName]: {
                         rich_text: [{ text: { content: document.getElementById('productName').value } }]
                     },
-                    quantity: {
+                    [FIELDS.quantity]: {
                         number: parseFloat(document.getElementById('quantity').value) || 0
                     },
-                    jpyCost: {
+                    [FIELDS.jpyCost]: {
                         number: parseFloat(document.getElementById('jpyCost').value) || null
                     },
-                    jpyPrice: {
+                    [FIELDS.jpyPrice]: {
                         number: parseFloat(document.getElementById('jpyPrice').value) || null
                     },
-                    twdPrice: {
+                    [FIELDS.twdPrice]: {
                         number: parseFloat(document.getElementById('twdPrice').value) || null
                     },
-                    weight: {
+                    [FIELDS.weight]: {
                         number: parseFloat(document.getElementById('weight').value) || null
                     },
-                    '購買狀態': {
+                    [FIELDS.buyStatus]: {
                         status: { name: document.getElementById('buyStatus').value }
                     },
-                    '付款狀態': {
+                    [FIELDS.payStatus]: {
                         status: { name: document.getElementById('payStatus').value }
                     },
-                    '發貨狀態': {
+                    [FIELDS.shipStatus]: {
                         status: { name: document.getElementById('shipStatus').value }
                     },
-                    purchaseDate: {
+                    [FIELDS.purchaseDate]: {
                         date: { start: document.getElementById('purchaseDate').value }
                     }
                 }
