@@ -202,27 +202,27 @@
         /* Status colors for list */
         .badge-status-未採買未付款未開始 {
             background-color: #D4BEA6 !important;
-            color: #FFFFFF !important;
+            color: #000000 !important;
         }
 
         .badge-status-已下訂 {
             background-color: #E8C9B5 !important;
-            color: #FFFFFF !important;
+            color: #000000 !important;
         }
 
         .badge-status-在日集貨 {
             background-color: #B5D0C6 !important;
-            color: #FFFFFF !important;
+            color: #000000 !important;
         }
 
         .badge-status-在台集貨 {
             background-color: #C5D4E8 !important;
-            color: #FFFFFF !important;
+            color: #000000 !important;
         }
 
         .badge-status-完成 {
             background-color: #D0C9D4 !important;
-            color: #FFFFFF !important;
+            color: #000000 !important;
         }
 
         /* Empty State */
@@ -268,14 +268,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
+            padding: 1rem;
             border-bottom: 1px solid var(--border);
+            background-color: var(--surface);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            margin: -1.5rem -1rem 1.5rem -1rem;
         }
 
         .modal-title {
             font-size: 1.25rem;
             font-weight: 600;
+            flex: 1;
+        }
+
+        .modal-header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
         }
 
         .modal-close {
@@ -500,7 +511,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="formTitle">新增需求單</h2>
-                <button class="modal-close" id="closeBtn">✕</button>
+                <div class="modal-header-actions">
+                    <button type="button" class="btn btn-secondary btn-small" id="cancelBtn" style="display:none;">取消</button>
+                    <button type="button" class="btn btn-danger btn-small" id="deleteBtn" style="display:none;">刪除</button>
+                    <button type="submit" class="btn btn-primary btn-small" id="submitBtn">保存</button>
+                    <button class="modal-close" id="closeBtn">✕</button>
+                </div>
             </div>
 
             <form id="itemForm">
@@ -596,13 +612,6 @@
                         <input type="date" id="purchaseDate" required>
                     </div>
                 </div>
-
-                <!-- Actions -->
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
-                    <button type="button" class="btn btn-danger btn-small" id="deleteBtn" style="display:none;">刪除</button>
-                    <button type="submit" class="btn btn-primary">保存</button>
-                </div>
             </form>
         </div>
     </div>
@@ -650,6 +659,7 @@
         const closeBtn = document.getElementById('closeBtn');
         const cancelBtn = document.getElementById('cancelBtn');
         const deleteBtn = document.getElementById('deleteBtn');
+        const submitBtn = document.getElementById('submitBtn');
         const formTitle = document.getElementById('formTitle');
 
         // Helper: Get value from Notion property
@@ -1048,6 +1058,10 @@
         closeBtn.addEventListener('click', closeModal);
         cancelBtn.addEventListener('click', closeModal);
         deleteBtn.addEventListener('click', handleDelete);
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            itemForm.dispatchEvent(new Event('submit'));
+        });
         itemForm.addEventListener('submit', handleSubmit);
 
         // Close modal on outside click
