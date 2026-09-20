@@ -275,22 +275,43 @@
             border-radius: 1rem 1rem 0 0;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 1.5rem 1rem 2rem;
+            padding: 0;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
+            gap: 0.5rem;
+            padding: 1rem;
             border-bottom: 1px solid var(--border);
+            background-color: var(--surface);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
         }
 
         .modal-title {
             font-size: 1.25rem;
             font-weight: 600;
+        }
+
+        .modal-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
         }
 
         .modal-close {
@@ -305,6 +326,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .form-wrapper {
+            overflow-y: auto;
+            flex: 1;
+            padding: 1.5rem 1rem;
         }
 
         /* Form */
@@ -467,14 +494,19 @@
         /* Buttons */
         .modal-actions {
             display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
+            gap: 0.5rem;
+            align-items: center;
         }
 
         .modal-actions .btn {
+            min-width: auto;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .modal-actions .btn-primary {
             flex: 1;
+            min-width: auto;
         }
 
         /* Loading */
@@ -538,10 +570,16 @@
     <div class="modal" id="formModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="formTitle">新增需求單</h2>
-                <button class="modal-close" id="closeBtn">✕</button>
+                <div class="modal-header-left">
+                    <h2 class="modal-title" id="formTitle">新增需求單</h2>
+                </div>
+                <div class="modal-header-right">
+                    <div class="modal-actions" id="headerActions"></div>
+                    <button class="modal-close" id="closeBtn">✕</button>
+                </div>
             </div>
 
+            <div class="form-wrapper">
             <form id="itemForm">
                 <!-- 基本資訊 -->
                 <div class="form-section">
@@ -649,13 +687,8 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
-                    <button type="button" class="btn btn-danger btn-small" id="deleteBtn" style="display:none;">刪除</button>
-                    <button type="submit" class="btn btn-primary">保存</button>
-                </div>
             </form>
+            </div>
         </div>
     </div>
 
@@ -704,8 +737,6 @@
         const itemForm = document.getElementById('itemForm');
         const newBtn = document.getElementById('newBtn');
         const closeBtn = document.getElementById('closeBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const deleteBtn = document.getElementById('deleteBtn');
         const formTitle = document.getElementById('formTitle');
         const uploadBtn = document.getElementById('uploadBtn');
         const fileInput = document.getElementById('fileInput');
@@ -923,16 +954,37 @@
             renderImagePreview();
         }
 
+        // Render header actions
+        function renderHeaderActions() {
+            const headerActions = document.getElementById('headerActions');
+            if (currentItem) {
+                // Edit mode
+                headerActions.innerHTML = `
+                    <button type="button" class="btn btn-danger btn-small" id="deleteBtn">刪除</button>
+                    <button type="button" class="btn btn-secondary btn-small" id="cancelBtn">取消</button>
+                    <button type="submit" class="btn btn-primary btn-small" form="itemForm">保存</button>
+                `;
+                document.getElementById('deleteBtn').addEventListener('click', handleDelete);
+            } else {
+                // New mode
+                headerActions.innerHTML = `
+                    <button type="button" class="btn btn-secondary btn-small" id="cancelBtn">取消</button>
+                    <button type="submit" class="btn btn-primary btn-small" form="itemForm">保存</button>
+                `;
+            }
+            document.getElementById('cancelBtn').addEventListener('click', closeModal);
+        }
+
         // Open form for new item
         function newItem() {
             currentItem = null;
             uploadedImages = [];
             formTitle.textContent = '新增需求單';
-            deleteBtn.style.display = 'none';
             itemForm.reset();
             document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
             document.querySelectorAll('input[type="hidden"]').forEach(i => i.value = '');
             renderImagePreview();
+            renderHeaderActions();
 
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('purchaseDate').value = today;
@@ -966,7 +1018,7 @@
             const props = item.properties || {};
 
             formTitle.textContent = '編輯需求單';
-            deleteBtn.style.display = 'inline-flex';
+            renderHeaderActions();
 
             // Reset all buttons
             document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
@@ -1136,8 +1188,6 @@
         // Event listeners
         newBtn.addEventListener('click', newItem);
         closeBtn.addEventListener('click', closeModal);
-        cancelBtn.addEventListener('click', closeModal);
-        deleteBtn.addEventListener('click', handleDelete);
         itemForm.addEventListener('submit', handleSubmit);
 
         formModal.addEventListener('click', (e) => {
