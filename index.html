@@ -19,16 +19,6 @@
             --warning: #C5D4E8;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #1A1A1A;
-                --surface: #2D2D2D;
-                --border: #3E3E3E;
-                --text: #E8E3DB;
-                --text-light: #B0A89E;
-            }
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -207,6 +197,32 @@
         .badge-status {
             background-color: var(--border);
             color: var(--text);
+        }
+
+        /* Status colors for list */
+        .badge-status-未採買未付款未開始 {
+            background-color: #D4BEA6 !important;
+            color: #FFFFFF !important;
+        }
+
+        .badge-status-已下訂 {
+            background-color: #E8C9B5 !important;
+            color: #FFFFFF !important;
+        }
+
+        .badge-status-在日集貨 {
+            background-color: #B5D0C6 !important;
+            color: #FFFFFF !important;
+        }
+
+        .badge-status-在台集貨 {
+            background-color: #C5D4E8 !important;
+            color: #FFFFFF !important;
+        }
+
+        .badge-status-完成 {
+            background-color: #D0C9D4 !important;
+            color: #FFFFFF !important;
         }
 
         /* Empty State */
@@ -823,9 +839,9 @@
                             </div>
                         </div>
                         <div class="badges">
-                            ${buyStatus ? `<span class="badge badge-status">${buyStatus}</span>` : ''}
-                            ${payStatus ? `<span class="badge badge-status">${payStatus}</span>` : ''}
-                            ${shipStatus ? `<span class="badge badge-status">${shipStatus}</span>` : ''}
+                            ${buyStatus ? `<span class="badge badge-status badge-status-${buyStatus}">${buyStatus}</span>` : ''}
+                            ${payStatus ? `<span class="badge badge-status badge-status-${payStatus}">${payStatus}</span>` : ''}
+                            ${shipStatus ? `<span class="badge badge-status badge-status-${shipStatus}">${shipStatus}</span>` : ''}
                         </div>
                     </div>
                 `;
