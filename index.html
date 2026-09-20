@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>需求單</title>
+    <style>
+        :root {
+            --primary: #9B8C7E;
+            --secondary: #A69F94;
+            --accent: #B5A89F;
+            --bg: #FAFAF8;
+            --surface: #FFFFFF;
+            --border: #E8E3DB;
+            --text: #2C2C2C;
+            --text-light: #6B6B6B;
+            --danger: #C17070;
+            --success: #7B9B88;
+            --warning: #B5A876;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1A1A1A;
+                --surface: #2D2D2D;
+                --border: #3E3E3E;
+                --text: #E8E3DB;
+                --text-light: #B0A89E;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--surface);
+        }
+
+        .btn-primary:active {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary {
+            background-color: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:active {
+            background-color: var(--border);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--surface);
+        }
+
+        .btn-danger:active {
+            opacity: 0.8;
+        }
+
+        .btn-small {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            min-height: 40px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 100%;
+            padding: 1rem;
+            margin: 0 auto;
+        }
+
+        /* List */
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .card:active {
+            background-color: var(--border);
+            transform: scale(0.98);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-subtitle {
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+
+        .card-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .info-label {
+            color: var(--text-light);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .info-value {
+            font-weight: 500;
+        }
+
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-status {
+            background-color: var(--border);
+            color: var(--text);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: flex-end;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            width: 100%;
+            max-height: 90vh;
+            border-radius: 1rem 1rem 0 0;
+            overflow-y: auto;
+            padding: 1.5rem 1rem 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--text);
+            background-color: var(--surface);
+            min-height: 44px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(155, 140, 126, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        /* Section */
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Badge Colors */
+        .status-pending {
+            background-color: #E8D4C8;
+            color: #6B4423;
+        }
+
+        .status-in-progress {
+            background-color: #D4DDE8;
+            color: #234B6B;
+        }
+
+        .status-done {
+            background-color: #C8E8D4;
+            color: #236B42;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .status-pending {
+                background-color: #5C3E2F;
+                color: #E8D4C8;
+            }
+
+            .status-in-progress {
+                background-color: #2F475C;
+                color: #D4DDE8;
+            }
+
+            .status-done {
+                background-color: #2F5C42;
+                color: #C8E8D4;
+            }
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .modal-content {
+                max-width: 500px;
+                max-height: none;
+                margin: auto;
+                border-radius: 1rem;
+            }
+
+            .modal {
+                align-items: center;
+                justify-content: center;
+                background-color: rgba(0, 0, 0, 0.3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1>需求單</h1>
+            <button class="btn btn-primary" id="newBtn">新增</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div id="listView">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 1rem;">載入中…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="formModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="formTitle">新增需求單</h2>
+                <button class="modal-close" id="closeBtn">✕</button>
+            </div>
+
+            <form id="itemForm">
+                <!-- 基本資訊 -->
+                <div class="form-section">
+                    <div class="section-title">基本資訊</div>
+
+                    <div class="form-group">
+                        <label>需求單編號</label>
+                        <input type="text" id="title" placeholder="例：REQ-001" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>客戶</label>
+                        <input type="text" id="customer" placeholder="客戶名稱" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>類別</label>
+                            <select id="category" required>
+                                <option value="">— 選擇 —</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>商品名稱</label>
+                            <input type="text" id="productName" placeholder="商品名稱" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 數量與價格 -->
+                <div class="form-section">
+                    <div class="section-title">數量與價格</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>數量</label>
+                            <input type="number" id="quantity" placeholder="0" min="0" step="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>日幣成本單價</label>
+                            <input type="number" id="jpyCost" placeholder="¥ 0" min="0" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>日幣報價單價</label>
+                            <input type="number" id="jpyPrice" placeholder="¥ 0" min="0" step="0.01">
+                        </div>
+
+                        <div class="form-group">
+                            <label>台幣報價單價</label>
+                            <input type="number" id="twdPrice" placeholder="$ 0" min="0" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>重量 (KG)</label>
+                        <input type="number" id="weight" placeholder="0" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <!-- 狀態 -->
+                <div class="form-section">
+                    <div class="section-title">狀態</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>購買狀態</label>
+                            <select id="buyStatus" required>
+                                <option value="">— 選擇 —</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>付款狀態</label>
+                            <select id="payStatus" required>
+                                <option value="">— 選擇 —</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>發貨狀態</label>
+                        <select id="shipStatus" required>
+                            <option value="">— 選擇 —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 日期 -->
+                <div class="form-section">
+                    <div class="section-title">日期</div>
+
+                    <div class="form-group">
+                        <label>採買日期</label>
+                        <input type="date" id="purchaseDate" required>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
+                    <button type="button" class="btn btn-danger btn-small" id="deleteBtn" style="display:none;">刪除</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const NOTION_DB_ID = '3e1c662d5fc480f680b0ef4c0b936e25';
+        const API_BASE = '/api/notion';
+        const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+        // State
+        let items = [];
+        let currentItem = null;
+        let fieldOptions = {
+            categories: [],
+            buyStatuses: [],
+            payStatuses: [],
+            shipStatuses: []
+        };
+
+        // DOM Elements
+        const listView = document.getElementById('listView');
+        const formModal = document.getElementById('formModal');
+        const itemForm = document.getElementById('itemForm');
+        const newBtn = document.getElementById('newBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const formTitle = document.getElementById('formTitle');
+
+        // Initialize
+        async function init() {
+            await fetchFieldOptions();
+            await fetchItems();
+        }
+
+        // Fetch field options from Notion
+        async function fetchFieldOptions() {
+            try {
+                const response = await fetch(`${API_BASE}?action=getDatabase&databaseId=${NOTION_DB_ID}`);
+                const data = await response.json();
+
+                if (data.properties) {
+                    const props = data.properties;
+
+                    // Extract select/status options
+                    if (props.category?.select?.options) {
+                        fieldOptions.categories = props.category.select.options.map(o => o.name);
+                    }
+                    if (props['購買狀態']?.status?.options) {
+                        fieldOptions.buyStatuses = props['購買狀態'].status.options.map(o => o.name);
+                    }
+                    if (props['付款狀態']?.status?.options) {
+                        fieldOptions.payStatuses = props['付款狀態'].status.options.map(o => o.name);
+                    }
+                    if (props['發貨狀態']?.status?.options) {
+                        fieldOptions.shipStatuses = props['發貨狀態'].status.options.map(o => o.name);
+                    }
+
+                    populateSelects();
+                }
+            } catch (error) {
+                console.error('Failed to fetch field options:', error);
+                // Show error but allow manual entry
+            }
+        }
+
+        // Populate select elements
+        function populateSelects() {
+            const categorySelect = document.getElementById('category');
+            const buySelect = document.getElementById('buyStatus');
+            const paySelect = document.getElementById('payStatus');
+            const shipSelect = document.getElementById('shipStatus');
+
+            fieldOptions.categories.forEach(opt => {
+                categorySelect.appendChild(new Option(opt, opt));
+            });
+
+            fieldOptions.buyStatuses.forEach(opt => {
+                buySelect.appendChild(new Option(opt, opt));
+            });
+
+            fieldOptions.payStatuses.forEach(opt => {
+                paySelect.appendChild(new Option(opt, opt));
+            });
+
+            fieldOptions.shipStatuses.forEach(opt => {
+                shipSelect.appendChild(new Option(opt, opt));
+            });
+        }
+
+        // Fetch items from Notion
+        async function fetchItems() {
+            try {
+                const response = await fetch(`${API_BASE}?action=query&databaseId=${NOTION_DB_ID}`);
+                const data = await response.json();
+
+                items = data.results || [];
+                renderList();
+            } catch (error) {
+                console.error('Failed to fetch items:', error);
+                listView.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>無法載入資料</p></div>';
+            }
+        }
+
+        // Render list
+        function renderList() {
+            if (items.length === 0) {
+                listView.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>沒有需求單</p></div>';
+                return;
+            }
+
+            listView.innerHTML = '<div class="list">' + items.map(item => {
+                const props = item.properties || {};
+                const title = props.title?.title?.[0]?.plain_text || 'N/A';
+                const customer = props.customer?.rich_text?.[0]?.plain_text || '';
+                const category = props.category?.select?.name || '';
+                const productName = props.productName?.rich_text?.[0]?.plain_text || '';
+                const quantity = props.quantity?.number || 0;
+                const twdPrice = props.twdPrice?.number || 0;
+                const buyStatus = props['購買狀態']?.status?.name || '';
+                const payStatus = props['付款狀態']?.status?.name || '';
+                const shipStatus = props['發貨狀態']?.status?.name || '';
+
+                return `
+                    <div class="card" onclick="editItem('${item.id}')">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${title}</div>
+                                <div class="card-subtitle">${customer}${category ? ' · ' + category : ''}</div>
+                            </div>
+                        </div>
+                        <div class="card-info">
+                            <div class="info-item">
+                                <span class="info-label">商品</span>
+                                <span class="info-value">${productName}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">數量</span>
+                                <span class="info-value">${quantity} 件</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">台幣報價</span>
+                                <span class="info-value">$${twdPrice.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="badges">
+                            ${buyStatus ? `<span class="badge badge-status">${buyStatus}</span>` : ''}
+                            ${payStatus ? `<span class="badge badge-status">${payStatus}</span>` : ''}
+                            ${shipStatus ? `<span class="badge badge-status">${shipStatus}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('') + '</div>';
+        }
+
+        // Open form for new item
+        function newItem() {
+            currentItem = null;
+            formTitle.textContent = '新增需求單';
+            deleteBtn.style.display = 'none';
+            itemForm.reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('purchaseDate').value = today;
+            formModal.classList.add('active');
+        }
+
+        // Edit item
+        function editItem(itemId) {
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            currentItem = item;
+            const props = item.properties || {};
+
+            formTitle.textContent = '編輯需求單';
+            deleteBtn.style.display = 'inline-flex';
+
+            document.getElementById('title').value = props.title?.title?.[0]?.plain_text || '';
+            document.getElementById('customer').value = props.customer?.rich_text?.[0]?.plain_text || '';
+            document.getElementById('category').value = props.category?.select?.name || '';
+            document.getElementById('productName').value = props.productName?.rich_text?.[0]?.plain_text || '';
+            document.getElementById('quantity').value = props.quantity?.number || '';
+            document.getElementById('jpyCost').value = props.jpyCost?.number || '';
+            document.getElementById('jpyPrice').value = props.jpyPrice?.number || '';
+            document.getElementById('twdPrice').value = props.twdPrice?.number || '';
+            document.getElementById('weight').value = props.weight?.number || '';
+            document.getElementById('buyStatus').value = props['購買狀態']?.status?.name || '';
+            document.getElementById('payStatus').value = props['付款狀態']?.status?.name || '';
+            document.getElementById('shipStatus').value = props['發貨狀態']?.status?.name || '';
+            document.getElementById('purchaseDate').value = props.purchaseDate?.date?.start || '';
+
+            formModal.classList.add('active');
+        }
+
+        // Submit form
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const data = {
+                properties: {
+                    title: {
+                        title: [{ text: { content: document.getElementById('title').value } }]
+                    },
+                    customer: {
+                        rich_text: [{ text: { content: document.getElementById('customer').value } }]
+                    },
+                    category: {
+                        select: { name: document.getElementById('category').value }
+                    },
+                    productName: {
+                        rich_text: [{ text: { content: document.getElementById('productName').value } }]
+                    },
+                    quantity: {
+                        number: parseFloat(document.getElementById('quantity').value) || 0
+                    },
+                    jpyCost: {
+                        number: parseFloat(document.getElementById('jpyCost').value) || null
+                    },
+                    jpyPrice: {
+                        number: parseFloat(document.getElementById('jpyPrice').value) || null
+                    },
+                    twdPrice: {
+                        number: parseFloat(document.getElementById('twdPrice').value) || null
+                    },
+                    weight: {
+                        number: parseFloat(document.getElementById('weight').value) || null
+                    },
+                    '購買狀態': {
+                        status: { name: document.getElementById('buyStatus').value }
+                    },
+                    '付款狀態': {
+                        status: { name: document.getElementById('payStatus').value }
+                    },
+                    '發貨狀態': {
+                        status: { name: document.getElementById('shipStatus').value }
+                    },
+                    purchaseDate: {
+                        date: { start: document.getElementById('purchaseDate').value }
+                    }
+                }
+            };
+
+            try {
+                if (currentItem) {
+                    // Update
+                    const response = await fetch(`${API_BASE}?action=update&pageId=${currentItem.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) throw new Error('Failed to update');
+                } else {
+                    // Create
+                    const createData = {
+                        ...data,
+                        parent: { database_id: NOTION_DB_ID }
+                    };
+
+                    const response = await fetch(API_BASE, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(createData)
+                    });
+
+                    if (!response.ok) throw new Error('Failed to create');
+                }
+
+                closeModal();
+                await fetchItems();
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('保存失敗，請重試');
+            }
+        }
+
+        // Delete item
+        async function handleDelete() {
+            if (!currentItem || !confirm('確定刪除？')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}?action=delete&pageId=${currentItem.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to delete');
+
+                closeModal();
+                await fetchItems();
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('刪除失敗，請重試');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            formModal.classList.remove('active');
+            currentItem = null;
+            itemForm.reset();
+        }
+
+        // Event listeners
+        newBtn.addEventListener('click', newItem);
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        deleteBtn.addEventListener('click', handleDelete);
+        itemForm.addEventListener('submit', handleSubmit);
+
+        // Close modal on outside click
+        formModal.addEventListener('click', (e) => {
+            if (e.target === formModal) closeModal();
+        });
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
