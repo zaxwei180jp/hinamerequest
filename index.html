@@ -190,9 +190,8 @@
 
         .badges {
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 0.5rem;
-            width: fit-content;
         }
 
         .badge {
@@ -208,32 +207,6 @@
         .badge-status {
             background-color: var(--border);
             color: var(--text);
-        }
-
-        /* Status color mapping */
-        .badge-status-未採買未付款未開始 {
-            background-color: #D4BEA6;
-            color: #2C2C2C;
-        }
-
-        .badge-status-已下訂 {
-            background-color: #E8C9B5;
-            color: #2C2C2C;
-        }
-
-        .badge-status-在日集貨 {
-            background-color: #B5D0C6;
-            color: #2C2C2C;
-        }
-
-        .badge-status-在台集貨 {
-            background-color: #C5D4E8;
-            color: #2C2C2C;
-        }
-
-        .badge-status-完成 {
-            background-color: #D0C9D4;
-            color: #2C2C2C;
         }
 
         /* Empty State */
@@ -350,6 +323,37 @@
 
         .form-row .form-group {
             margin-bottom: 0;
+        }
+
+        /* Status Button Group */
+        .status-button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .status-btn {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            background-color: var(--surface);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 44px;
+            text-align: left;
+        }
+
+        .status-btn:active {
+            background-color: var(--border);
+        }
+
+        .status-btn.active {
+            background-color: var(--primary);
+            color: var(--surface);
+            border-color: var(--primary);
         }
 
         /* Section */
@@ -551,27 +555,19 @@
                 <div class="form-section">
                     <div class="section-title">狀態</div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>購買狀態</label>
-                            <select id="buyStatus" required>
-                                <option value="">— 選擇 —</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label>購買狀態</label>
+                        <div id="buyStatusGroup" class="status-button-group"></div>
+                    </div>
 
-                        <div class="form-group">
-                            <label>付款狀態</label>
-                            <select id="payStatus" required>
-                                <option value="">— 選擇 —</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label>付款狀態</label>
+                        <div id="payStatusGroup" class="status-button-group"></div>
                     </div>
 
                     <div class="form-group">
                         <label>發貨狀態</label>
-                        <select id="shipStatus" required>
-                            <option value="">— 選擇 —</option>
-                        </select>
+                        <div id="shipStatusGroup" class="status-button-group"></div>
                     </div>
                 </div>
 
@@ -599,7 +595,26 @@
         // Configuration
         const NOTION_DB_ID = '3e1c662d5fc480f680b0ef4c0b936e25';
         const API_BASE = '/api/notion';
-        const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+        // Field mapping - 繁體中文欄位名稱
+        const FIELDS = {
+            title: '需求單號',
+            customer: '客戶',
+            category: '類別',
+            productName: '商品名稱',
+            quantity: '數量',
+            jpyCost: '日幣成本單價',
+            jpyPrice: '日幣報價單價',
+            twdPrice: '台幣報價單價',
+            jpyTotal: '日幣報價總價',
+            twdTotal: '台幣總價',
+            twdProfit: '台幣利潤',
+            weight: '重量',
+            buyStatus: '購買狀態',
+            payStatus: '付款狀態',
+            shipStatus: '發貨狀態',
+            purchaseDate: '採買日期'
+        };
 
         // State
         let items = [];
@@ -611,19 +626,6 @@
             shipStatuses: []
         };
 
-        // Status color mapping
-        const statusColorMap = {
-            '未採買未付款未開始': 'badge-status-未採買未付款未開始',
-            '已下訂': 'badge-status-已下訂',
-            '在日集貨': 'badge-status-在日集貨',
-            '在台集貨': 'badge-status-在台集貨',
-            '完成': 'badge-status-完成'
-        };
-
-        function getStatusClass(status) {
-            return statusColorMap[status] || 'badge-status';
-        }
-
         // DOM Elements
         const listView = document.getElementById('listView');
         const formModal = document.getElementById('formModal');
@@ -633,6 +635,19 @@
         const cancelBtn = document.getElementById('cancelBtn');
         const deleteBtn = document.getElementById('deleteBtn');
         const formTitle = document.getElementById('formTitle');
+
+        // Helper: Get value from Notion property
+        function getPropertyValue(prop) {
+            if (!prop) return '';
+            if (prop.title) return prop.title.map(t => t.plain_text).join('');
+            if (prop.rich_text) return prop.rich_text.map(t => t.plain_text).join('');
+            if (prop.number !== undefined) return prop.number || '';
+            if (prop.select) return prop.select.name || '';
+            if (prop.status) return prop.status.name || '';
+            if (prop.date) return prop.date.start || '';
+            if (prop.formula && prop.formula.number !== undefined) return prop.formula.number || '';
+            return '';
+        }
 
         // Initialize
         async function init() {
@@ -650,49 +665,106 @@
                     const props = data.properties;
 
                     // Extract select/status options
-                    if (props.category?.select?.options) {
-                        fieldOptions.categories = props.category.select.options.map(o => o.name);
+                    if (props[FIELDS.category]?.select?.options) {
+                        fieldOptions.categories = props[FIELDS.category].select.options.map(o => o.name);
                     }
-                    if (props['購買狀態']?.status?.options) {
-                        fieldOptions.buyStatuses = props['購買狀態'].status.options.map(o => o.name);
+                    if (props[FIELDS.buyStatus]?.status?.options) {
+                        fieldOptions.buyStatuses = props[FIELDS.buyStatus].status.options.map(o => o.name);
                     }
-                    if (props['付款狀態']?.status?.options) {
-                        fieldOptions.payStatuses = props['付款狀態'].status.options.map(o => o.name);
+                    if (props[FIELDS.payStatus]?.status?.options) {
+                        fieldOptions.payStatuses = props[FIELDS.payStatus].status.options.map(o => o.name);
                     }
-                    if (props['發貨狀態']?.status?.options) {
-                        fieldOptions.shipStatuses = props['發貨狀態'].status.options.map(o => o.name);
+                    if (props[FIELDS.shipStatus]?.status?.options) {
+                        fieldOptions.shipStatuses = props[FIELDS.shipStatus].status.options.map(o => o.name);
                     }
 
                     populateSelects();
+                    populateStatusButtons();
                 }
             } catch (error) {
                 console.error('Failed to fetch field options:', error);
-                // Show error but allow manual entry
             }
         }
 
         // Populate select elements
         function populateSelects() {
             const categorySelect = document.getElementById('category');
-            const buySelect = document.getElementById('buyStatus');
-            const paySelect = document.getElementById('payStatus');
-            const shipSelect = document.getElementById('shipStatus');
 
             fieldOptions.categories.forEach(opt => {
                 categorySelect.appendChild(new Option(opt, opt));
             });
+        }
 
-            fieldOptions.buyStatuses.forEach(opt => {
-                buySelect.appendChild(new Option(opt, opt));
+        // Populate status buttons
+        function populateStatusButtons() {
+            const buyStatusGroup = document.getElementById('buyStatusGroup');
+            const payStatusGroup = document.getElementById('payStatusGroup');
+            const shipStatusGroup = document.getElementById('shipStatusGroup');
+
+            // Clear existing buttons
+            buyStatusGroup.innerHTML = '';
+            payStatusGroup.innerHTML = '';
+            shipStatusGroup.innerHTML = '';
+
+            // Create buy status buttons
+            fieldOptions.buyStatuses.forEach(status => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'status-btn';
+                btn.textContent = status;
+                btn.dataset.status = status;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    selectStatusButton(buyStatusGroup, status, 'buyStatus');
+                });
+                buyStatusGroup.appendChild(btn);
             });
 
-            fieldOptions.payStatuses.forEach(opt => {
-                paySelect.appendChild(new Option(opt, opt));
+            // Create pay status buttons
+            fieldOptions.payStatuses.forEach(status => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'status-btn';
+                btn.textContent = status;
+                btn.dataset.status = status;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    selectStatusButton(payStatusGroup, status, 'payStatus');
+                });
+                payStatusGroup.appendChild(btn);
             });
 
-            fieldOptions.shipStatuses.forEach(opt => {
-                shipSelect.appendChild(new Option(opt, opt));
+            // Create ship status buttons
+            fieldOptions.shipStatuses.forEach(status => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'status-btn';
+                btn.textContent = status;
+                btn.dataset.status = status;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    selectStatusButton(shipStatusGroup, status, 'shipStatus');
+                });
+                shipStatusGroup.appendChild(btn);
             });
+        }
+
+        // Select status button
+        function selectStatusButton(group, status, fieldId) {
+            // Remove active class from all buttons in group
+            group.querySelectorAll('.status-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Add active class to clicked button
+            group.querySelector(`[data-status="${status}"]`).classList.add('active');
+            // Store value (we'll retrieve it from active button later)
+        }
+
+        // Get active status value from group
+        function getActiveStatusValue(groupId) {
+            const group = document.getElementById(groupId);
+            const activeBtn = group?.querySelector('.status-btn.active');
+            return activeBtn?.textContent || '';
         }
 
         // Fetch items from Notion
@@ -718,15 +790,15 @@
 
             listView.innerHTML = '<div class="list">' + items.map(item => {
                 const props = item.properties || {};
-                const title = props.title?.title?.[0]?.plain_text || 'N/A';
-                const customer = props.customer?.rich_text?.[0]?.plain_text || '';
-                const category = props.category?.select?.name || '';
-                const productName = props.productName?.rich_text?.[0]?.plain_text || '';
-                const quantity = props.quantity?.number || 0;
-                const twdPrice = props.twdPrice?.number || 0;
-                const buyStatus = props['購買狀態']?.status?.name || '';
-                const payStatus = props['付款狀態']?.status?.name || '';
-                const shipStatus = props['發貨狀態']?.status?.name || '';
+                const title = getPropertyValue(props[FIELDS.title]);
+                const customer = getPropertyValue(props[FIELDS.customer]);
+                const category = getPropertyValue(props[FIELDS.category]);
+                const productName = getPropertyValue(props[FIELDS.productName]);
+                const quantity = getPropertyValue(props[FIELDS.quantity]);
+                const twdPrice = getPropertyValue(props[FIELDS.twdPrice]);
+                const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
+                const payStatus = getPropertyValue(props[FIELDS.payStatus]);
+                const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
 
                 return `
                     <div class="card" onclick="editItem('${item.id}')">
@@ -747,13 +819,13 @@
                             </div>
                             <div class="info-item">
                                 <span class="info-label">台幣報價</span>
-                                <span class="info-value">$${twdPrice.toLocaleString()}</span>
+                                <span class="info-value">$${twdPrice ? parseFloat(twdPrice).toLocaleString() : '0'}</span>
                             </div>
                         </div>
                         <div class="badges">
-                            ${buyStatus ? `<span class="badge ${getStatusClass(buyStatus)}">${buyStatus}</span>` : ''}
-                            ${payStatus ? `<span class="badge ${getStatusClass(payStatus)}">${payStatus}</span>` : ''}
-                            ${shipStatus ? `<span class="badge ${getStatusClass(shipStatus)}">${shipStatus}</span>` : ''}
+                            ${buyStatus ? `<span class="badge badge-status">${buyStatus}</span>` : ''}
+                            ${payStatus ? `<span class="badge badge-status">${payStatus}</span>` : ''}
+                            ${shipStatus ? `<span class="badge badge-status">${shipStatus}</span>` : ''}
                         </div>
                     </div>
                 `;
@@ -768,6 +840,30 @@
             itemForm.reset();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('purchaseDate').value = today;
+
+            // Clear status button selections
+            document.querySelectorAll('#buyStatusGroup .status-btn, #payStatusGroup .status-btn, #shipStatusGroup .status-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Auto-generate next request number
+            if (items.length > 0) {
+                const allNumbers = items
+                    .map(item => {
+                        const title = getPropertyValue(item.properties[FIELDS.title]);
+                        const match = title.match(/(\D+)(\d+)$/);
+                        return match ? { prefix: match[1], num: parseInt(match[2]) } : null;
+                    })
+                    .filter(x => x);
+
+                if (allNumbers.length > 0) {
+                    // 取得最後一筆的前綴和數字
+                    const lastNumber = allNumbers.sort((a, b) => b.num - a.num)[0];
+                    const nextNum = String(lastNumber.num + 1).padStart(3, '0');
+                    document.getElementById('title').value = lastNumber.prefix + nextNum;
+                }
+            }
+
             formModal.classList.add('active');
         }
 
@@ -782,19 +878,43 @@
             formTitle.textContent = '編輯需求單';
             deleteBtn.style.display = 'inline-flex';
 
-            document.getElementById('title').value = props.title?.title?.[0]?.plain_text || '';
-            document.getElementById('customer').value = props.customer?.rich_text?.[0]?.plain_text || '';
-            document.getElementById('category').value = props.category?.select?.name || '';
-            document.getElementById('productName').value = props.productName?.rich_text?.[0]?.plain_text || '';
-            document.getElementById('quantity').value = props.quantity?.number || '';
-            document.getElementById('jpyCost').value = props.jpyCost?.number || '';
-            document.getElementById('jpyPrice').value = props.jpyPrice?.number || '';
-            document.getElementById('twdPrice').value = props.twdPrice?.number || '';
-            document.getElementById('weight').value = props.weight?.number || '';
-            document.getElementById('buyStatus').value = props['購買狀態']?.status?.name || '';
-            document.getElementById('payStatus').value = props['付款狀態']?.status?.name || '';
-            document.getElementById('shipStatus').value = props['發貨狀態']?.status?.name || '';
-            document.getElementById('purchaseDate').value = props.purchaseDate?.date?.start || '';
+            document.getElementById('title').value = getPropertyValue(props[FIELDS.title]);
+            document.getElementById('customer').value = getPropertyValue(props[FIELDS.customer]);
+            document.getElementById('category').value = getPropertyValue(props[FIELDS.category]);
+            document.getElementById('productName').value = getPropertyValue(props[FIELDS.productName]);
+            document.getElementById('quantity').value = getPropertyValue(props[FIELDS.quantity]);
+            document.getElementById('jpyCost').value = getPropertyValue(props[FIELDS.jpyCost]);
+            document.getElementById('jpyPrice').value = getPropertyValue(props[FIELDS.jpyPrice]);
+            document.getElementById('twdPrice').value = getPropertyValue(props[FIELDS.twdPrice]);
+            document.getElementById('weight').value = getPropertyValue(props[FIELDS.weight]);
+            document.getElementById('purchaseDate').value = getPropertyValue(props[FIELDS.purchaseDate]);
+
+            // Set status buttons
+            const buyStatusValue = getPropertyValue(props[FIELDS.buyStatus]);
+            const payStatusValue = getPropertyValue(props[FIELDS.payStatus]);
+            const shipStatusValue = getPropertyValue(props[FIELDS.shipStatus]);
+
+            if (buyStatusValue) {
+                const buyBtn = document.querySelector(`#buyStatusGroup [data-status="${buyStatusValue}"]`);
+                if (buyBtn) {
+                    document.querySelectorAll('#buyStatusGroup .status-btn').forEach(b => b.classList.remove('active'));
+                    buyBtn.classList.add('active');
+                }
+            }
+            if (payStatusValue) {
+                const payBtn = document.querySelector(`#payStatusGroup [data-status="${payStatusValue}"]`);
+                if (payBtn) {
+                    document.querySelectorAll('#payStatusGroup .status-btn').forEach(b => b.classList.remove('active'));
+                    payBtn.classList.add('active');
+                }
+            }
+            if (shipStatusValue) {
+                const shipBtn = document.querySelector(`#shipStatusGroup [data-status="${shipStatusValue}"]`);
+                if (shipBtn) {
+                    document.querySelectorAll('#shipStatusGroup .status-btn').forEach(b => b.classList.remove('active'));
+                    shipBtn.classList.add('active');
+                }
+            }
 
             formModal.classList.add('active');
         }
@@ -805,43 +925,43 @@
 
             const data = {
                 properties: {
-                    title: {
+                    [FIELDS.title]: {
                         title: [{ text: { content: document.getElementById('title').value } }]
                     },
-                    customer: {
+                    [FIELDS.customer]: {
                         rich_text: [{ text: { content: document.getElementById('customer').value } }]
                     },
-                    category: {
+                    [FIELDS.category]: {
                         select: { name: document.getElementById('category').value }
                     },
-                    productName: {
+                    [FIELDS.productName]: {
                         rich_text: [{ text: { content: document.getElementById('productName').value } }]
                     },
-                    quantity: {
+                    [FIELDS.quantity]: {
                         number: parseFloat(document.getElementById('quantity').value) || 0
                     },
-                    jpyCost: {
+                    [FIELDS.jpyCost]: {
                         number: parseFloat(document.getElementById('jpyCost').value) || null
                     },
-                    jpyPrice: {
+                    [FIELDS.jpyPrice]: {
                         number: parseFloat(document.getElementById('jpyPrice').value) || null
                     },
-                    twdPrice: {
+                    [FIELDS.twdPrice]: {
                         number: parseFloat(document.getElementById('twdPrice').value) || null
                     },
-                    weight: {
+                    [FIELDS.weight]: {
                         number: parseFloat(document.getElementById('weight').value) || null
                     },
-                    '購買狀態': {
-                        status: { name: document.getElementById('buyStatus').value }
+                    [FIELDS.buyStatus]: {
+                        status: { name: getActiveStatusValue('buyStatusGroup') }
                     },
-                    '付款狀態': {
-                        status: { name: document.getElementById('payStatus').value }
+                    [FIELDS.payStatus]: {
+                        status: { name: getActiveStatusValue('payStatusGroup') }
                     },
-                    '發貨狀態': {
-                        status: { name: document.getElementById('shipStatus').value }
+                    [FIELDS.shipStatus]: {
+                        status: { name: getActiveStatusValue('shipStatusGroup') }
                     },
-                    purchaseDate: {
+                    [FIELDS.purchaseDate]: {
                         date: { start: document.getElementById('purchaseDate').value }
                     }
                 }
