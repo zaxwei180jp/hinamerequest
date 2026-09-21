@@ -1570,6 +1570,7 @@
             // Restore images
             const productImagesValue = getPropertyValue(props[FIELDS.productImages]);
             uploadedImages = productImagesValue ? JSON.parse(productImagesValue) : [];
+            document.getElementById('productImages').value = JSON.stringify(uploadedImages);
             renderImagePreview();
 
             // Set status buttons
