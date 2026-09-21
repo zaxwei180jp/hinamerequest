@@ -423,6 +423,8 @@
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .badge-status {
@@ -1737,8 +1739,8 @@
         document.getElementById('jpyCost').addEventListener('input', (e) => {
             const jpyCostValue = e.target.value;
             const jpyPriceInput = document.getElementById('jpyPrice');
-            // Only auto-fill if jpyPrice is empty
-            if (!jpyPriceInput.value && jpyCostValue) {
+            // Auto-fill if: (1) new item (currentItem is null), or (2) jpyPrice is empty
+            if (jpyCostValue && (currentItem === null || !jpyPriceInput.value)) {
                 jpyPriceInput.value = jpyCostValue;
             }
         });
