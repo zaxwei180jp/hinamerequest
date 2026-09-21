@@ -268,8 +268,9 @@
 
         .badges {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 0.5rem;
+            overflow-x: auto;
         }
 
         /* Filter Section */
@@ -1731,6 +1732,16 @@
             itemForm.dispatchEvent(new Event('submit'));
         });
         itemForm.addEventListener('submit', handleSubmit);
+
+        // Auto-fill jpyPrice when jpyCost changes
+        document.getElementById('jpyCost').addEventListener('input', (e) => {
+            const jpyCostValue = e.target.value;
+            const jpyPriceInput = document.getElementById('jpyPrice');
+            // Only auto-fill if jpyPrice is empty
+            if (!jpyPriceInput.value && jpyCostValue) {
+                jpyPriceInput.value = jpyCostValue;
+            }
+        });
 
         // Filter event listeners
         filterCustomerInput.addEventListener('input', (e) => {
