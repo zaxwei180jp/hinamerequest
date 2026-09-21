@@ -1344,7 +1344,6 @@
 
         // Calculate and update statistics
         function updateStats() {
-            let totalItems = 0;
             let totalPrice = 0;
             let totalProfit = 0;
 
@@ -1376,11 +1375,9 @@
 
             filteredItems.forEach(item => {
                 const props = item.properties || {};
-                const quantity = parseFloat(getPropertyValue(props[FIELDS.quantity])) || 0;
                 const twdTotal = parseFloat(getPropertyValue(props[FIELDS.twdTotal])) || 0;
                 const twdProfit = parseFloat(getPropertyValue(props[FIELDS.twdProfit])) || 0;
 
-                totalItems += quantity;
                 totalPrice += twdTotal;
                 totalProfit += twdProfit;
             });
@@ -1393,7 +1390,7 @@
             statsContainer.innerHTML = `
                 <div class="stat-card">
                     <div class="stat-label">件數 ${filterSummary}</div>
-                    <div class="stat-value">${formatNumber(totalItems)}</div>
+                    <div class="stat-value">${filteredItems.length}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">台幣總價</div>
