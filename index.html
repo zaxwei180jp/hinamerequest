@@ -802,9 +802,9 @@
         <div class="collapsible-section">
             <div class="collapsible-header" onclick="toggleSection('stats')">
                 <span class="collapsible-title">📊 統計數據</span>
-                <span class="collapsible-icon" id="statsIcon">▼</span>
+                <span class="collapsible-icon collapsed" id="statsIcon">▼</span>
             </div>
-            <div class="collapsible-content" id="statsContent">
+            <div class="collapsible-content collapsed" id="statsContent">
                 <div class="stats-section" id="statsContainer"></div>
             </div>
         </div>
@@ -813,14 +813,23 @@
         <div class="collapsible-section">
             <div class="collapsible-header" onclick="toggleSection('filter')">
                 <span class="collapsible-title">🔍 篩選</span>
-                <span class="collapsible-icon" id="filterIcon">▼</span>
+                <span class="collapsible-icon collapsed" id="filterIcon">▼</span>
             </div>
-            <div class="collapsible-content" id="filterContent">
+            <div class="collapsible-content collapsed" id="filterContent">
                 <div class="filter-section">
                     <div class="filter-group">
                         <div class="input-wrapper">
                             <input type="text" id="filterCustomer" placeholder="篩選客戶名稱" class="filter-input">
                             <button type="button" class="clear-btn" onclick="clearFilterCustomer()">✕</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>採購日期區間</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="date" id="filterDateStart" class="filter-input" style="flex: 1;">
+                            <span>至</span>
+                            <input type="date" id="filterDateEnd" class="filter-input" style="flex: 1;">
+                            <button type="button" class="clear-btn" onclick="clearFilterDate()" style="padding: 0.5rem;">✕</button>
                         </div>
                     </div>
                     <div class="filter-group">
@@ -879,20 +888,20 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>類別</label>
-                            <select id="category" required>
-                                <option value="">— 選擇 —</option>
-                            </select>
+                    <div class="form-group">
+                        <label>類別</label>
+                        <div id="categoryGroup" class="status-group" style="margin-bottom: 0.5rem;"></div>
+                        <div style="margin-top: 0.5rem;">
+                            <input type="text" id="categoryCustom" placeholder="或輸入自訂類別" class="filter-input">
                         </div>
+                        <input type="hidden" id="category" value="">
+                    </div>
 
-                        <div class="form-group">
-                            <label>商品名稱</label>
-                            <div class="input-wrapper">
-                                <input type="text" id="productName" placeholder="商品名稱" required>
-                                <button type="button" class="clear-btn" onclick="clearProductName()">✕</button>
-                            </div>
+                    <div class="form-group">
+                        <label>商品名稱</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="productName" placeholder="商品名稱" required>
+                            <button type="button" class="clear-btn" onclick="clearProductName()">✕</button>
                         </div>
                     </div>
                 </div>
@@ -1019,7 +1028,9 @@
             customer: '',
             buyStatus: [],
             payStatus: [],
-            shipStatus: []
+            shipStatus: [],
+            dateStart: '',
+            dateEnd: ''
         };
 
         // DOM Elements
@@ -1090,7 +1101,7 @@
                         fieldOptions.shipStatuses = props[FIELDS.shipStatus].status.options.map(o => o.name);
                     }
 
-                    populateSelects();
+                    populateCategoryButtons();
                     populateStatusButtons();
                     populateFilterButtons();
                 }
@@ -1099,13 +1110,34 @@
             }
         }
 
+        // Populate category buttons
+        function populateCategoryButtons() {
+            const categoryGroup = document.getElementById('categoryGroup');
+            categoryGroup.innerHTML = '';
+
+            fieldOptions.categories.forEach(category => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'status-btn';
+                btn.textContent = category;
+                btn.dataset.category = category;
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Clear custom input
+                    document.getElementById('categoryCustom').value = '';
+                    // Set hidden field
+                    document.getElementById('category').value = category;
+                    // Update button styles
+                    document.querySelectorAll('#categoryGroup .status-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+                categoryGroup.appendChild(btn);
+            });
+        }
+
         // Populate select elements
         function populateSelects() {
-            const categorySelect = document.getElementById('category');
-
-            fieldOptions.categories.forEach(opt => {
-                categorySelect.appendChild(new Option(opt, opt));
-            });
+            // No longer needed - categories are now buttons
         }
 
         // Populate status buttons
@@ -1386,7 +1418,7 @@
             });
 
             const statsContainer = document.getElementById('statsContainer');
-            const filterSummary = filters.customer || filters.buyStatus.length > 0 || filters.payStatus.length > 0 || filters.shipStatus.length > 0
+            const filterSummary = filters.customer || filters.buyStatus.length > 0 || filters.payStatus.length > 0 || filters.shipStatus.length > 0 || filters.dateStart || filters.dateEnd
                 ? '（已篩選）'
                 : '';
 
@@ -1413,6 +1445,14 @@
             renderList();
         }
 
+        function clearFilterDate() {
+            document.getElementById('filterDateStart').value = '';
+            document.getElementById('filterDateEnd').value = '';
+            filters.dateStart = '';
+            filters.dateEnd = '';
+            renderList();
+        }
+
         function clearCustomer() {
             document.getElementById('customer').value = '';
         }
@@ -1430,6 +1470,7 @@
                 const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
                 const payStatus = getPropertyValue(props[FIELDS.payStatus]);
                 const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
+                const purchaseDate = getPropertyValue(props[FIELDS.purchaseDate]);
 
                 // Customer name filter
                 if (filters.customer && !customer.toLowerCase().includes(filters.customer.toLowerCase())) {
@@ -1444,6 +1485,14 @@
                     return false;
                 }
                 if (filters.shipStatus.length > 0 && !filters.shipStatus.includes(shipStatus)) {
+                    return false;
+                }
+
+                // Date range filter
+                if (filters.dateStart && purchaseDate < filters.dateStart) {
+                    return false;
+                }
+                if (filters.dateEnd && purchaseDate > filters.dateEnd) {
                     return false;
                 }
 
@@ -1522,6 +1571,13 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('purchaseDate').value = today;
 
+            // Clear category selection
+            document.getElementById('category').value = '';
+            document.getElementById('categoryCustom').value = '';
+            document.querySelectorAll('#categoryGroup .status-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
             // Clear status button selections
             document.querySelectorAll('#buyStatusGroup .status-btn, #payStatusGroup .status-btn, #shipStatusGroup .status-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -1546,6 +1602,8 @@
             }
 
             formModal.classList.add('active');
+            // Scroll to top
+            window.scrollTo(0, 0);
         }
 
         // Edit item
@@ -1561,7 +1619,26 @@
 
             document.getElementById('title').value = getPropertyValue(props[FIELDS.title]);
             document.getElementById('customer').value = getPropertyValue(props[FIELDS.customer]);
-            document.getElementById('category').value = getPropertyValue(props[FIELDS.category]);
+
+            // Handle category - check if it's a predefined option or custom
+            const categoryValue = getPropertyValue(props[FIELDS.category]);
+            document.getElementById('category').value = categoryValue;
+            document.getElementById('categoryCustom').value = '';
+
+            // Clear category button selections
+            document.querySelectorAll('#categoryGroup .status-btn').forEach(b => b.classList.remove('active'));
+
+            // If category is in the predefined list, activate the button
+            if (categoryValue && fieldOptions.categories.includes(categoryValue)) {
+                const categoryBtn = document.querySelector(`#categoryGroup [data-category="${categoryValue}"]`);
+                if (categoryBtn) {
+                    categoryBtn.classList.add('active');
+                }
+            } else if (categoryValue) {
+                // If it's a custom category, show it in the custom input
+                document.getElementById('categoryCustom').value = categoryValue;
+            }
+
             document.getElementById('productName').value = getPropertyValue(props[FIELDS.productName]);
             document.getElementById('quantity').value = getPropertyValue(props[FIELDS.quantity]);
             document.getElementById('jpyCost').value = getPropertyValue(props[FIELDS.jpyCost]);
@@ -1745,9 +1822,31 @@
             }
         });
 
+        // Custom category input listener
+        document.getElementById('categoryCustom').addEventListener('input', (e) => {
+            const customValue = e.target.value;
+            // Set the hidden category field with custom value
+            document.getElementById('category').value = customValue;
+            // Clear category button selection when typing custom
+            if (customValue) {
+                document.querySelectorAll('#categoryGroup .status-btn').forEach(b => b.classList.remove('active'));
+            }
+        });
+
         // Filter event listeners
         filterCustomerInput.addEventListener('input', (e) => {
             filters.customer = e.target.value;
+            renderList();
+        });
+
+        // Date range filter listeners
+        document.getElementById('filterDateStart').addEventListener('change', (e) => {
+            filters.dateStart = e.target.value;
+            renderList();
+        });
+
+        document.getElementById('filterDateEnd').addEventListener('change', (e) => {
+            filters.dateEnd = e.target.value;
             renderList();
         });
 
@@ -1756,7 +1855,11 @@
             filters.buyStatus = [];
             filters.payStatus = [];
             filters.shipStatus = [];
+            filters.dateStart = '';
+            filters.dateEnd = '';
             filterCustomerInput.value = '';
+            document.getElementById('filterDateStart').value = '';
+            document.getElementById('filterDateEnd').value = '';
             updateFilterButtons();
             renderList();
         });
