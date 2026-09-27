@@ -1388,6 +1388,7 @@
                 const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
                 const payStatus = getPropertyValue(props[FIELDS.payStatus]);
                 const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
+                const purchaseDate = getPropertyValue(props[FIELDS.purchaseDate]);
 
                 // Customer name filter
                 if (filters.customer && !customer.toLowerCase().includes(filters.customer.toLowerCase())) {
@@ -1402,6 +1403,14 @@
                     return false;
                 }
                 if (filters.shipStatus.length > 0 && !filters.shipStatus.includes(shipStatus)) {
+                    return false;
+                }
+
+                // Date range filter
+                if (filters.dateStart && purchaseDate < filters.dateStart) {
+                    return false;
+                }
+                if (filters.dateEnd && purchaseDate > filters.dateEnd) {
                     return false;
                 }
 
@@ -1758,6 +1767,13 @@
                     });
 
                     if (!response.ok) throw new Error('Failed to create');
+                }
+
+                // Add custom category to the list if it's not already there
+                const categoryValue = document.getElementById('category').value;
+                if (categoryValue && !fieldOptions.categories.includes(categoryValue)) {
+                    fieldOptions.categories.push(categoryValue);
+                    populateCategoryButtons();
                 }
 
                 closeModal();
