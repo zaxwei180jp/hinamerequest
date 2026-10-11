@@ -1623,9 +1623,9 @@
                 }
             }
 
-            formModal.classList.add('active');
             // Scroll to top
             window.scrollTo(0, 0);
+            formModal.classList.add('active');
         }
 
         // Edit item
@@ -1703,6 +1703,8 @@
                 }
             }
 
+            // Scroll to top
+            window.scrollTo(0, 0);
             formModal.classList.add('active');
         }
 
@@ -1825,6 +1827,7 @@
             formModal.classList.remove('active');
             currentItem = null;
             itemForm.reset();
+            window.scrollTo(0, 0);
         }
 
         // Event listeners
