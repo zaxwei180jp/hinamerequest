@@ -980,6 +980,15 @@
                         <input type="date" id="purchaseDate" required>
                     </div>
                 </div>
+
+                <!-- 備註 -->
+                <div class="form-section">
+                    <div class="section-title">備註</div>
+
+                    <div class="form-group">
+                        <textarea id="notes" placeholder="輸入備註..." style="width: 100%; min-height: 80px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.5rem; font-family: inherit; font-size: 1rem; resize: vertical;"></textarea>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -1006,6 +1015,7 @@
             twdTotal: '台幣總價',
             twdProfit: '台幣利潤',
             weight: '重量',
+            notes: '備註',
             buyStatus: '購買狀態',
             payStatus: '付款狀態',
             shipStatus: '發貨狀態',
@@ -1525,6 +1535,7 @@
                 const buyStatus = getPropertyValue(props[FIELDS.buyStatus]);
                 const payStatus = getPropertyValue(props[FIELDS.payStatus]);
                 const shipStatus = getPropertyValue(props[FIELDS.shipStatus]);
+                const notes = getPropertyValue(props[FIELDS.notes]);
                 const productImagesValue = getPropertyValue(props[FIELDS.productImages]);
                 const images = productImagesValue ? JSON.parse(productImagesValue) : [];
                 const firstImage = images.length > 0 ? images[0] : null;
@@ -1560,6 +1571,7 @@
                                 ${payStatus ? `<span class="badge badge-status badge-status-${payStatus}">${payStatus}</span>` : ''}
                                 ${shipStatus ? `<span class="badge badge-status badge-status-${shipStatus}">${shipStatus}</span>` : ''}
                             </div>
+                            ${notes ? `<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-size: 0.875rem; color: var(--text-light); white-space: pre-wrap; word-break: break-word;">${notes}</div>` : ''}
                         </div>
                         ${firstImage ? `<img src="${firstImage}" alt="Product" class="card-image">` : '<div class="card-image-placeholder"></div>'}
                     </div>
@@ -1576,6 +1588,7 @@
             deleteBtn.style.display = 'none';
             itemForm.reset();
             document.getElementById('productImages').value = '';
+            document.getElementById('notes').value = '';
             renderImagePreview();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('purchaseDate').value = today;
@@ -1654,6 +1667,7 @@
             document.getElementById('jpyPrice').value = getPropertyValue(props[FIELDS.jpyPrice]);
             document.getElementById('twdPrice').value = getPropertyValue(props[FIELDS.twdPrice]);
             document.getElementById('weight').value = getPropertyValue(props[FIELDS.weight]);
+            document.getElementById('notes').value = getPropertyValue(props[FIELDS.notes]);
             document.getElementById('purchaseDate').value = getPropertyValue(props[FIELDS.purchaseDate]);
 
             // Restore images
@@ -1727,6 +1741,9 @@
                     },
                     [FIELDS.weight]: {
                         number: parseFloat(document.getElementById('weight').value) || null
+                    },
+                    [FIELDS.notes]: {
+                        rich_text: [{ text: { content: document.getElementById('notes').value } }]
                     },
                     [FIELDS.buyStatus]: {
                         status: { name: getActiveStatusValue('buyStatusGroup') }
