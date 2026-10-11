@@ -139,6 +139,9 @@
             transition: all 0.2s;
             display: flex;
             gap: 1rem;
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
         }
 
         .card:active {
@@ -151,8 +154,8 @@
         }
 
         .card-image {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 0.5rem;
             object-fit: cover;
             background-color: var(--border);
@@ -160,8 +163,8 @@
         }
 
         .card-image-placeholder {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 0.5rem;
             background-color: var(--border);
             flex-shrink: 0;
@@ -1623,9 +1626,9 @@
                 }
             }
 
-            // Scroll to top
-            window.scrollTo(0, 0);
             formModal.classList.add('active');
+            // Scroll to top after rendering
+            setTimeout(() => window.scrollTo(0, 0), 0);
         }
 
         // Edit item
@@ -1703,9 +1706,9 @@
                 }
             }
 
-            // Scroll to top
-            window.scrollTo(0, 0);
             formModal.classList.add('active');
+            // Scroll to top after rendering
+            setTimeout(() => window.scrollTo(0, 0), 0);
         }
 
         // Submit form
